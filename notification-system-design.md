@@ -223,6 +223,91 @@ To reduce database load, I recommend using **Redis Cache**.
 - Cache may contain slightly stale data until it expires.
 - Cache invalidation needs to be handled carefully.
 
+# Stage 5
+## Problems with Current Implementation
+
+The current implementation sends email, saves to database, and pushes notifications one by one for every student.
+
+Problems:
+
+- Very slow for 50,000 users.
+- If email sending fails, the process stops.
+- Database writes become a bottleneck.
+- High server load.
+- No retry mechanism.
+- Poor scalability.
+
+## Improved Architecture
+
+Use an asynchronous message queue such as RabbitMQ, Kafka, or AWS SQS.
+
+Flow:
+
+1. HR clicks "Notify All".
+2. API validates the request.
+3. Notification jobs are pushed into the message queue.
+4. Worker services process jobs in parallel.
+5. One worker sends emails.
+6. Another worker saves notifications to MongoDB.
+7. Another worker sends push notifications.
+8. Failed jobs are retried automatically.
+
+## Improved Architecture
+
+Use an asynchronous message queue such as RabbitMQ, Kafka, or AWS SQS.
+
+Flow:
+
+1. HR clicks "Notify All".
+2. API validates the request.
+3. Notification jobs are pushed into the message queue.
+4. Worker services process jobs in parallel.
+5. One worker sends emails.
+6. Another worker saves notifications to MongoDB.
+7. Another worker sends push notifications.
+8. Failed jobs are retried automatically.
+
+## Improved Pseudocode
+
+```javascript
+function notifyAll(studentIds, message) {
+
+    for (const studentId of studentIds) {
+
+        queue.publish({
+            studentId,
+            message
+        });
+
+    }
+
+    return "Notification request accepted";
+}
+```
+
+## Worker
+
+```javascript
+queue.consume((job) => {
+
+    saveToDatabase(job);
+
+    sendEmail(job);
+
+    sendPushNotification(job);
+
+});
+```
+
+## Benefits
+
+- Faster execution
+- Parallel processing
+- Automatic retries
+- Fault tolerant
+- Highly scalable
+- Better user experience
+
 
 
 
