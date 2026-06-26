@@ -196,3 +196,33 @@ Creating indexes on every column is not a good practice because:
 - Database has to maintain every index.
 - Composite indexes perform much better for this query.
 
+# Stage 4
+## Solution
+
+To reduce database load, I recommend using **Redis Cache**.
+
+### Flow
+
+1. User opens notification page.
+2. Application first checks Redis Cache.
+3. If notifications exist in cache, return them directly.
+4. If cache miss occurs, fetch notifications from MongoDB.
+5. Store the result in Redis with a short expiration time (for example, 5 minutes).
+6. Return the notifications to the user.
+
+## Advantages
+
+- Faster response time.
+- Reduced database load.
+- Better scalability.
+- Handles high traffic efficiently.
+
+## Trade-offs
+
+- Additional infrastructure is required.
+- Cache may contain slightly stale data until it expires.
+- Cache invalidation needs to be handled carefully.
+
+
+
+
