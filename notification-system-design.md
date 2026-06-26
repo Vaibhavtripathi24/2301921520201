@@ -64,3 +64,135 @@ Returns only placement notifications.
 
 Status:
 200 OK
+
+# Stage 2
+
+## Database Choice
+
+I recommend MongoDB because:
+
+- Flexible schema
+- High read/write performance
+- Easy scalability
+- Easy integration with Node.js using Mongoose
+
+## Collections
+
+### students
+
+```json
+{
+  "_id": ObjectId,
+  "name": "Vaibhav Tripathi",
+  "email": "csai23088@glbitm.ac.in"
+}
+```
+
+### notifications
+
+```json
+{
+  "_id": ObjectId,
+  "studentId": ObjectId,
+  "type": "Placement",
+  "message": "Google Hiring Drive",
+  "isRead": false,
+  "createdAt": ISODate()
+}
+```
+
+## MongoDB Queries
+
+### Insert Notification
+
+```javascript
+db.notifications.insertOne({
+  studentId: ObjectId("student_id"),
+  type: "Placement",
+  message: "Google Hiring Drive",
+  isRead: false,
+  createdAt: new Date()
+});
+```
+
+### Get Unread Notifications
+
+```javascript
+db.notifications.find({
+  studentId: ObjectId("student_id"),
+  isRead: false
+});
+```
+
+### Mark Notification as Read
+
+```javascript
+db.notifications.updateOne(
+  { _id: ObjectId("notification_id") },
+  {
+    $set: {
+      isRead: true
+    }
+  }
+);
+```
+
+### Delete Notification
+
+```javascript
+db.notifications.deleteOne({
+  _id: ObjectId("notification_id")
+});
+```
+
+### Get Placement Notifications
+
+```javascript
+db.notifications.find({
+  type: "Placement"
+});
+```
+
+## Indexes
+
+```javascript
+db.notifications.createIndex({ studentId: 1 });
+db.notifications.createIndex({ type: 1 });
+db.notifications.createIndex({ isRead: 1 });
+db.notifications.createIndex({ createdAt: -1 });
+```
+
+# Stage 3
+
+## Why is the given query slow?
+
+The query becomes slow because the notifications table contains around 5 million records. Without proper indexing, the database performs a full table scan before filtering the results. Sorting by createdAt also increases execution time.
+
+## Optimized Query
+
+```sql
+SELECT *
+FROM notifications
+WHERE studentId = 1042
+  AND isRead = false
+  AND notificationType = 'Placement'
+  AND createdAt >= NOW() - INTERVAL 7 DAY
+ORDER BY createdAt DESC;
+```
+
+## Recommended Index
+
+```sql
+CREATE INDEX idx_notifications
+ON notifications(studentId, isRead, notificationType, createdAt DESC);
+```
+
+## Why not index every column?
+
+Creating indexes on every column is not a good practice because:
+
+- It increases storage usage.
+- Inserts and updates become slower.
+- Database has to maintain every index.
+- Composite indexes perform much better for this query.
+
